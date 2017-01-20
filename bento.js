@@ -1,4 +1,3 @@
-var gulp = require('gulp');
 var inquirer = require('inquirer');
 var fs = require('fs');
 var path = require('path');
@@ -10,6 +9,7 @@ var main = function () {
     var prompt = function () {
         var strings = {
             newProject: "New Bento project...",
+            openDoc: "Open documentation"
         };
 
         inquirer.prompt([{
@@ -18,11 +18,16 @@ var main = function () {
             message: 'What do you want to do?',
             choices: [
                 strings.newProject,
+                strings.openDoc,
                 exitStr
             ]
         }]).then(function (answers) {
             if (answers.question === strings.newProject) {
                 newBentoProject();
+            } else if (answers.question === strings.openDoc) {
+                // open documentation in browser
+                var spawn = require('child_process').spawn;
+                spawn('open', ['https://luckykat.github.io/Bento/']);
             }
         });
     };
@@ -31,7 +36,10 @@ var main = function () {
     // Check if cwd is a Bento project
     var cwd = process.cwd();
     if (fs.existsSync(path.join(cwd, 'gulpfile.js'))) {
-        gulp.start('default');
+        // run local gulp
+        var child_process = require('child_process');
+        child_process.fork('./node_modules/.bin/gulp');
+        // execCommand('./node_modules/.bin/gulp');
         return;
     } else {
         // prompt to create new bento project
@@ -67,15 +75,9 @@ var askConfirmation = function (question, onAccept, onDeny) {
  */
 var execCommand = function (cmd, args, onComplete) {
     var spawn = require('child_process').spawn;
-    var task = spawn(cmd, args);
-    task.stdout.on('data', function (data) {
-        console.log(data.toString());
+    var task = spawn(cmd, args, {
+        stdio: "inherit"
     });
-
-    task.stderr.on('data', function (data) {
-        console.error(data.toString());
-    });
-
     task.on('exit', function (code) {
         console.log('Exited with code ' + code.toString());
         if (onComplete) {
@@ -135,6 +137,7 @@ var newBentoProject = function () {
             // TODO: optional - clean up package.json with real project name and author
             // could also ask about other game settings
             console.log("Installation complete!");
+            console.log("Use the `bento` command in a project folder to view development tasks.");
         };
         if (fs.existsSync(projectPath)) {
             console.error('The folder ' + projectName + ' already exists!');
