@@ -1,6 +1,6 @@
 {
   "name": "bento",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Command line tool for the Bento game engine",
   "homepage": "http://lucky-kat.com",
   "main": "index.js",
@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/LuckyKat/bento-cli#readme",
   "dependencies": {
+    "adm-zip": "0.4.7",
+    "command-exists": "1.0.2",
     "cordova": "6.4.0",
     "fontmin": "0.9.6",
     "graceful-fs": "4.1.2",
@@ -43,6 +45,7 @@
     "jsonfile": "2.2.3",
     "json-stable-stringify": "1.0.1",
     "merge-stream": "1.0.0",
+    "request": "2.79.0",
     "spritesmith-texturepacker": "1.0.0",
     "vinyl": "1.1.1"
   }
