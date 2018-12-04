@@ -142,6 +142,7 @@ var newBentoProject = function () {
             var packageJsonStr;
             var packageJson;
             var gameJsStr;
+            var configStr;
             if (fs.existsSync('package.json')) {
                 packageJsonStr = fs.readFileSync(path.join('package.json'), 'utf-8');
                 packageJson = JSON.parse(packageJsonStr);
@@ -154,10 +155,18 @@ var newBentoProject = function () {
             if (fs.existsSync(path.join('js', 'game.js'))) {
                 gameJsStr = fs.readFileSync(path.join('js', 'game.js'), 'utf-8');
 
-                gameJsStr.replace("Bento.saveState.setId('EmptyProject/');", "Bento.saveState.setId('" + projectName + "/');");
-                gameJsStr.replace("name: 'Empty Project',", "name: '" + projectName + "',");
+                gameJsStr = gameJsStr.replace("Bento.saveState.setId('EmptyProject/');", "Bento.saveState.setId('" + projectName + "/');");
+                gameJsStr = gameJsStr.replace("name: 'Empty Project',", "name: '" + projectName + "',");
 
                 fs.writeFileSync(path.join('js', 'game.js'), gameJsStr);
+            }
+
+            if (fs.existsSync(path.join('config.xml'))) {
+                configStr = fs.readFileSync(path.join('config.xml'), 'utf-8');
+
+                configStr = configStr.replace('<name>Bento Empty Project</name>', '<name>' + projectName + '</name>');
+
+                fs.writeFileSync(path.join('config.xml'), configStr);
             }
 
         };
