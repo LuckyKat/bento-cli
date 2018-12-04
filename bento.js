@@ -138,6 +138,28 @@ var newBentoProject = function () {
             // could also ask about other game settings
             console.log("Installation complete!");
             console.log("Use the `bento` command in a project folder to view development tasks.");
+
+            var packageJsonStr;
+            var packageJson;
+            var gameJsStr;
+            if (fs.existsSync('package.json')) {
+                packageJsonStr = fs.readFileSync(path.join('package.json'), 'utf-8');
+                packageJson = JSON.parse(packageJsonStr);
+
+                packageJson.name = projectName;
+
+                fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 4));
+            }
+
+            if (fs.existsSync(path.join('js', 'game.js'))) {
+                gameJsStr = fs.readFileSync(path.join('js', 'game.js'), 'utf-8');
+
+                gameJsStr.replace("Bento.saveState.setId('EmptyProject/');", "Bento.saveState.setId('" + projectName + "/');");
+                gameJsStr.replace("name: 'Empty Project',", "name: '" + projectName + "',");
+
+                fs.writeFileSync(path.join('js', 'game.js'), gameJsStr);
+            }
+
         };
         if (fs.existsSync(projectPath)) {
             console.error('The folder ' + projectName + ' already exists!');
@@ -146,16 +168,24 @@ var newBentoProject = function () {
 
         download();
     };
+    var askProjectName = function () {
+        // ask for project name
+        inquirer.prompt([{
+            type: 'input',
+            name: 'projectName',
+            message: "Name your new project (no spaces):"
+        }]).then(function (answers) {
+            projectName = answers.projectName || "EmptyBentoProject";
 
-    // ask for project name
-    inquirer.prompt([{
-        type: 'input',
-        name: 'projectName',
-        message: "Name your new project:"
-    }]).then(function (answers) {
-        projectName = answers.projectName || "EmptyBentoProject";
-        downloadEmptyProject(projectName);
-    });
+            if (projectName.indexOf(' ') >= 0) {
+                askProjectName();
+                return;
+            }
+            downloadEmptyProject(projectName);
+        });
+    };
+
+    askProjectName();
 };
 
 main();

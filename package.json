@@ -1,6 +1,6 @@
 {
   "name": "bento-game-engine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Command line tool for the Bento game engine",
   "homepage": "http://lucky-kat.com",
   "main": "index.js",
@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/LuckyKat/bento-cli#readme",
   "dependencies": {
-    "adm-zip": "0.4.7",
+    "adm-zip": ">=0.4.11",
     "command-exists": "1.0.2",
     "inquirer": "2.0.0",
     "request": "2.79.0"
