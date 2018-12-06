@@ -5,6 +5,24 @@ var https = require('https');
 
 var exitStr = 'Exit';
 
+/**
+ * Delete an entire folder
+ * http://stackoverflow.com/a/32197381/5930772
+ */
+var deleteFolderRecursive = function (source) {
+    if (fs.existsSync(source)) {
+        fs.readdirSync(source).forEach(function (file, index) {
+            var curPath = path.join(source, file);
+            if (fs.lstatSync(curPath).isDirectory()) { // recurse
+                deleteFolderRecursive(curPath);
+            } else { // delete file
+                fs.unlinkSync(curPath);
+            }
+        });
+        fs.rmdirSync(source);
+    }
+};
+
 var main = function () {
     var prompt = function () {
         var strings = {
@@ -133,7 +151,12 @@ var newBentoProject = function () {
         var afterInstall = function () {
             // clean up
             console.log("Cleaning up...");
-            fs.unlink("readme.md", function () {});
+            if (fs.existsSync('readme.md')) {
+                fs.unlinkSync('readme.m');
+            }
+            if (fs.existsSync('changelog.md')) {
+                fs.unlinkSync('changelog.m');
+            }
             // TODO: optional - clean up package.json with real project name and author
             // could also ask about other game settings
             console.log("Installation complete!");
@@ -143,6 +166,7 @@ var newBentoProject = function () {
             var packageJson;
             var gameJsStr;
             var configStr;
+            var indexStr;
             if (fs.existsSync('package.json')) {
                 packageJsonStr = fs.readFileSync(path.join('package.json'), 'utf-8');
                 packageJson = JSON.parse(packageJsonStr);
@@ -168,6 +192,17 @@ var newBentoProject = function () {
 
                 fs.writeFileSync(path.join('config.xml'), configStr);
             }
+
+            if (fs.existsSync(path.join('index.html'))) {
+                indexStr = fs.readFileSync(path.join('index.html'), 'utf-8');
+
+                indexStr = indexStr.replace('<title>Empty Project</title>', '<title>' + projectName + '</title>');
+
+                fs.writeFileSync(path.join('index.html'), indexStr);
+            }
+
+            // remove git history
+            deleteFolderRecursive(path.join('.git'));
 
         };
         if (fs.existsSync(projectPath)) {

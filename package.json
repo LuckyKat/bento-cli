@@ -1,6 +1,6 @@
 {
   "name": "bento-game-engine",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Command line tool for the Bento game engine",
   "homepage": "http://lucky-kat.com",
   "main": "index.js",
