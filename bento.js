@@ -152,10 +152,10 @@ var newBentoProject = function () {
             // clean up
             console.log("Cleaning up...");
             if (fs.existsSync('readme.md')) {
-                fs.unlinkSync('readme.m');
+                fs.unlinkSync('readme.md');
             }
             if (fs.existsSync('changelog.md')) {
-                fs.unlinkSync('changelog.m');
+                fs.unlinkSync('changelog.md');
             }
             // TODO: optional - clean up package.json with real project name and author
             // could also ask about other game settings
