@@ -21,7 +21,7 @@
   "homepage": "https://github.com/LuckyKat/bento-cli#readme",
   "dependencies": {
     "adm-zip": ">=0.4.11",
-    "command-exists": "1.0.2",
+    "command-exists": "*",
     "inquirer": "2.0.0",
     "request": "2.79.0"
   }
