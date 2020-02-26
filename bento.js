@@ -26,7 +26,8 @@ var deleteFolderRecursive = function (source) {
 var main = function () {
     var prompt = function () {
         var strings = {
-            newProject: "New Bento project...",
+            newProject: "New 2D Bento project...",
+            newProject3D: "New 3D Bento project...",
             openDoc: "Open documentation"
         };
 
@@ -36,12 +37,15 @@ var main = function () {
             message: 'What do you want to do?',
             choices: [
                 strings.newProject,
+                strings.newProject3D,
                 strings.openDoc,
                 exitStr
             ]
         }]).then(function (answers) {
             if (answers.question === strings.newProject) {
                 newBentoProject();
+            } else if (answers.question === strings.newProject3D) {
+                newBentoProject('3D-master');
             } else if (answers.question === strings.openDoc) {
                 // open documentation in browser
                 var spawn = require('child_process').spawn;
@@ -106,7 +110,7 @@ var execCommand = function (cmd, args, onComplete) {
 /**
  * Download bento empty project
  */
-var newBentoProject = function () {
+var newBentoProject = function (branch) {
     var projectName = "";
     var downloadEmptyProject = function (projectName) {
         var request = require('request');
@@ -114,7 +118,7 @@ var newBentoProject = function () {
 
         var cwd = process.cwd();
         var projectPath = path.join(cwd, projectName);
-        var url = 'https://github.com/LuckyKat/Bento-Empty-Project/archive/master.zip';
+        var url = 'https://github.com/LuckyKat/Bento-Empty-Project/archive/' + branch + '.zip';
         var download = function () {
             var tmpFilePath = path.join(cwd, "temp.zip");
             console.log("Downloading bento project...");
@@ -128,7 +132,7 @@ var newBentoProject = function () {
                     // clean up temp zip
                     fs.unlink(tmpFilePath, function () {});
 
-                    fs.renameSync('Bento-Empty-Project-master', projectName);
+                    fs.renameSync('Bento-Empty-Project-' + branch, projectName);
                     install();
                 });
         };
@@ -228,6 +232,8 @@ var newBentoProject = function () {
             downloadEmptyProject(projectName);
         });
     };
+
+    branch = branch || 'master';
 
     askProjectName();
 };

@@ -1,8 +1,7 @@
 {
   "name": "bento-game-engine",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "Command line tool for the Bento game engine",
-  "homepage": "http://lucky-kat.com",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
