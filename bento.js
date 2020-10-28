@@ -4,6 +4,7 @@ var path = require('path');
 var https = require('https');
 
 var exitStr = 'Exit';
+var projectPath;
 
 /**
  * Delete an entire folder
@@ -20,6 +21,30 @@ var deleteFolderRecursive = function (source) {
             }
         });
         fs.rmdirSync(source);
+    }
+};
+
+var copyFolderRecursive = function (source, destination, ignoreNames) {
+    var files = [];
+
+    //check if folder needs to be created or integrated
+    var destinationFolder = path.join(destination, path.basename(source));
+    if (!fs.existsSync(destinationFolder)) {
+        fs.mkdirSync(destinationFolder);
+    }
+
+    //copy
+    if (fs.lstatSync(source).isDirectory()) {
+        files = fs.readdirSync(source);
+        files.forEach(function (file) {
+            var curSource = path.join(source, file);
+            if (fs.lstatSync(curSource).isDirectory()) {
+                copyFolderRecursive(curSource, destinationFolder);
+            } else {
+                console.log("copying: " + path.basename(curSource));
+                fs.copyFileSync(curSource, path.join(destinationFolder, file));
+            }
+        });
     }
 };
 
@@ -43,7 +68,7 @@ var main = function () {
             ]
         }]).then(function (answers) {
             if (answers.question === strings.newProject) {
-                newBentoProject();
+                newBentoProject('master');
             } else if (answers.question === strings.newProject3D) {
                 newBentoProject('3D-master');
             } else if (answers.question === strings.openDoc) {
@@ -117,7 +142,7 @@ var newBentoProject = function (branch) {
         var AdmZip = require('adm-zip');
 
         var cwd = process.cwd();
-        var projectPath = path.join(cwd, projectName);
+        projectPath = path.join(cwd, projectName);
         var url = 'https://github.com/LuckyKat/Bento-Empty-Project/archive/' + branch + '.zip';
         var download = function () {
             var tmpFilePath = path.join(cwd, "temp.zip");
@@ -133,7 +158,8 @@ var newBentoProject = function (branch) {
                     fs.unlink(tmpFilePath, function () {});
 
                     fs.renameSync('Bento-Empty-Project-' + branch, projectName);
-                    install();
+                    //install();
+                    afterInstall();
                 });
         };
         var install = function () {
@@ -152,6 +178,8 @@ var newBentoProject = function (branch) {
             });
 
         };
+
+
         var afterInstall = function () {
             // clean up
             console.log("Cleaning up...");
@@ -208,6 +236,8 @@ var newBentoProject = function (branch) {
             // remove git history
             deleteFolderRecursive(path.join('.git'));
 
+
+            checkForPluginsFolder();
         };
         if (fs.existsSync(projectPath)) {
             console.error('The folder ' + projectName + ' already exists!');
@@ -215,6 +245,114 @@ var newBentoProject = function (branch) {
         }
 
         download();
+    };
+    var addPlugins = function (snippet) {
+        var cwd = process.cwd();
+
+        // preemptively read out config.xml
+        var configXMLPath = path.join(projectPath, 'config.xml');
+        var configXMLStr = fs.readFileSync(configXMLPath, 'utf-8');
+
+        //get the path to the plugin folder
+        var cordovaPluginsPath = path.join(cwd, 'cordova-plugins/');
+        var pluginsSnippetStr;
+
+        //replace stuff in the config xml with our found snippet
+        if (fs.existsSync(path.join(cordovaPluginsPath, snippet))) {
+            pluginsSnippetStr = fs.readFileSync(path.join(cordovaPluginsPath, snippet), 'utf-8');
+            var pluginsLineStart = "<!-- Include plugins here -->";
+            configXMLStr = configXMLStr.replace(pluginsLineStart, pluginsLineStart + '\n' + pluginsSnippetStr);
+        }
+
+        //write back out the config.xml
+        fs.writeFileSync(configXMLPath, configXMLStr);
+    };
+    var addModulesFromList = function (list) {
+        var cwd = process.cwd();
+
+        // preemptively read out init.js
+        var initJSPath = path.join(projectPath, 'js', 'init.js');
+        var initJSStr = fs.readFileSync(initJSPath, 'utf-8');
+
+        //get the path to the modeuls folder
+        var bentoModulesPath = path.join(cwd, 'bento-modules/');
+        var moduleListStr;
+        var moduleList = [];
+
+        if (fs.existsSync(path.join(bentoModulesPath, list + '.json'))) {
+            moduleListStr = fs.readFileSync(path.join(bentoModulesPath, list + '.json'), 'utf-8');
+            moduleList = JSON.parse(moduleListStr);
+
+            // for each module on the list we just found
+            moduleList.forEach(function (moduleFolder) {
+                var modulePath = path.join(bentoModulesPath, moduleFolder);
+                //copy everything over
+                var jsPath = path.join(modulePath, 'js');
+                if (fs.existsSync(jsPath)) {
+                    copyFolderRecursive(jsPath, projectPath);
+                }
+                var assetsPath = path.join(modulePath, 'assets');
+                if (fs.existsSync(assetsPath)) {
+                    copyFolderRecursive(assetsPath, projectPath);
+                }
+                var scriptsPath = path.join(modulePath, 'scripts');
+                if (fs.existsSync(scriptsPath)) {
+                    copyFolderRecursive(scriptsPath, projectPath);
+                }
+                var libPath = path.join(modulePath, 'lib');
+                if (fs.existsSync(libPath)) {
+                    copyFolderRecursive(libPath, projectPath);
+                }
+                var miscPath = path.join(modulePath, 'misc');
+                if (fs.existsSync(miscPath)) {
+                    copyFolderRecursive(miscPath, projectPath);
+                }
+
+                //get the data and snippet
+                var initData = path.join(modulePath, 'init.json');
+                var initDataStr;
+                var initDataObject;
+                if (fs.existsSync(initData)) {
+                    initDataStr = fs.readFileSync(initData, 'utf-8');
+                    initDataObject = JSON.parse(initDataStr);
+                }
+                var initSnippet = path.join(modulePath, 'init.js');
+                var initSnippetStr;
+                if (fs.existsSync(initSnippet)) {
+                    initSnippetStr = fs.readFileSync(initSnippet, 'utf-8');
+                }
+
+                // replace stuff
+                var functionLineStart = "var initFunctions = {";
+                var fullSnippet = "";
+                if (initDataObject && initDataObject.name && initSnippetStr) {
+                    fullSnippet = "\n" + initDataObject.name + ":" + initSnippetStr + ",";
+                    initJSStr = initJSStr.replace(functionLineStart, functionLineStart + fullSnippet);
+                }
+            });
+        }
+
+        //write back out the init.js
+        fs.writeFileSync(initJSPath, initJSStr);
+    };
+    var checkForPluginsFolder = function () {
+        var moveOn = function () {
+            console.log('\n\nYou\'re all set!');
+        };
+        var cwd = process.cwd();
+        if (fs.existsSync(path.join(cwd, 'cordova-plugins/')) && fs.existsSync(path.join(cwd, 'bento-modules/'))) {
+            askConfirmation('cordova-plugins and bento-modules detected, would you like to install the default plugins and modules?', function () {
+                addPlugins('default');
+                addModulesFromList('default');
+                moveOn();
+            }, function () {
+                console.log("okay...");
+                moveOn();
+            });
+        } else {
+            console.log('cordova-plugins not detected.');
+            moveOn();
+        }
     };
     var askProjectName = function () {
         // ask for project name
